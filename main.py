@@ -41,9 +41,9 @@ def check_ip(suspect, confirmed):
 if __name__ == '__main__':
     """Takes arguments, root path, and case number."""
     print(25 * '-+-' + ' Start of Processing ' + 25 * '-+-')
-    #root = sys.argv[1]
-    case_number = 'TEST'#sys.argv[2]
-    root = "test_directory"
+    root = sys.argv[1]
+    case_number = sys.argv[2]
+    #root = "test_directory"
     logging.info(f'Setting root to: {root}')
     file_list = file_handler.get_file_paths(root_path=root)
 
