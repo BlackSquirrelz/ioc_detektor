@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print(25 * '-+-' + ' Start of Processing ' + 25 * '-+-')
     #root = sys.argv[1]
     case_number = 'TEST'#sys.argv[2]
-    root = "C:\\Users\\Xiaowangzu\\PycharmProjects\\ioc_detektor\\test_directory"
+    root = "test_directory"
     logging.info(f'Setting root to: {root}')
     file_list = file_handler.get_file_paths(root_path=root)
 
@@ -58,6 +58,7 @@ if __name__ == '__main__':
 
     # PART TWO: Compare IP Addresses found to Known BAD IP Addresses
     known_bads = file_handler.read_file('ioc_list.txt')
+    known_bads = [ip.strip() for ip in known_bads]
     identified_ips = file_handler.get_json('output\\Identified_IPS.txt')
     for entry in identified_ips:
         for item in entry:
