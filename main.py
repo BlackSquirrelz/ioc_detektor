@@ -83,12 +83,11 @@ if __name__ == '__main__':
     for entry in identified_ips:
         for item in entry:
             if item['IP'] in known_bads:
-                print(f'\tWarning {item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
-                logging.warning(f'Warning {item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
+                #print(f'\tWarning {item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
+                logging.warning(f'{item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
 
-    print(len(regex_list))
     # PART THREE: REGEX Matcher
     for entry in regex_list:
         for item in entry:
-            print(f'\tWarning {item["Match"]} matches pattern {item["Regex"]} in file {item["file_path"]}, line #: {item["line_number"]} line # ')
+            logging.warning(f'{item["Match"]} matches pattern {item["Regex"]} in file {item["file_path"]}, line #: {item["line_number"]}!')
     print(25 * '-*-' + ' End of Processing ' + 25 * '-*-')
