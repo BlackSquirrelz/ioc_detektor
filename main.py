@@ -44,7 +44,7 @@ def generic_regex(text, file):
     regex_list = file_handler.read_file('ioc_regex.txt')
     hit_list = []
     for regex in regex_list:
-        pattern = re.compile(regex)
+        pattern = re.compile(regex.strip())
         index = 0
 
         for line in text:
@@ -62,6 +62,7 @@ if __name__ == '__main__':
     root = sys.argv[1]
     case_number = sys.argv[2]
     #root = "test_directory"
+    print(root)
     logging.info(f'Setting root to: {root}')
     file_list = file_handler.get_file_paths(root_path=root)
 
@@ -80,14 +81,26 @@ if __name__ == '__main__':
     known_bads = file_handler.read_file('ioc_list.txt')
     known_bads = [ip.strip() for ip in known_bads]
     identified_ips = file_handler.get_json('output\\Identified_IPS.txt')
+    bad_ips = []
     for entry in identified_ips:
         for item in entry:
             if item['IP'] in known_bads:
                 #print(f'\tWarning {item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
                 logging.warning(f'{item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
+                bad_ips.append({'ip': item["IP"], 'path': item["file_path"]})
+
+    # Writing Found BAD IP's
+    bad_ip_outfile = 'output\\' + str(case_number) + "_IP_Matches"
+    file_handler.save_json(bad_ip_outfile, bad_ips)
 
     # PART THREE: REGEX Matcher
+    bad_regex = []
     for entry in regex_list:
         for item in entry:
             logging.warning(f'{item["Match"]} matches pattern {item["Regex"]} in file {item["file_path"]}, line #: {item["line_number"]}!')
+            bad_regex.append({'match': item["Match"], 'path': item["file_path"]})
+
+    bad_regex_outfile = 'output\\' + str(case_number) + "_REGEX_Matches"
+    file_handler.save_json(bad_regex_outfile, bad_regex)
+
     print(25 * '-*-' + ' End of Processing ' + 25 * '-*-')
