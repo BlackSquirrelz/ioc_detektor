@@ -1,5 +1,4 @@
 import sys
-import os
 import re
 import logging
 import file_handler
@@ -14,21 +13,25 @@ import file_handler
 #https://www.geeksforgeeks.org/python-how-to-search-for-a-string-in-text-files/
 
 
-def get_ip(text, file):
+def get_ip(file):
     """Read Text from file and regex search for IP Addreses."""
     print(f"Extracting IP Addresses from {file}")
     # Setting Regexd Pattern for IP Extraction.
     pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
     index = 0
-    ip_list = []
+    with open(file, 'r') as f:
+        ip_dict = {
+            file: []
+        }
+        for line in f:
+            line = line.strip()
+            index += 1
 
-    for line in text:
-        index += 1
-        hit = pattern.search(line)
-        if hit is not None:
-            logging.info(f"Line {index} in {file} contains IP: {hit[0]}.")
-            ip_list.append({'IP': hit[0], 'line_number': index, 'file_path': file})
-    return ip_list
+            hit = pattern.search(line)
+            if hit is not None:
+                logging.info(f"Line {index} in {file} contains IP: {hit[0]}.")
+                ip_dict[file].append(hit[0])
+    return ip_dict
 
 
 def check_ip(suspect, confirmed):
@@ -38,22 +41,25 @@ def check_ip(suspect, confirmed):
         logging.warning(f"Identified potential match {suspect}")
 
 
-def generic_regex(text, file):
+def generic_regex(regex_list, file):
     print(f"Searching for regex matches in {file}")
-    # Setting Regexd Pattern for matching.
-    regex_list = file_handler.read_file('ioc_regex.txt')
-    hit_list = []
-    for regex in regex_list:
-        pattern = re.compile(regex.strip())
-        index = 0
 
-        for line in text:
+    with open(file, 'r') as f:
+        # Setting Regexd Pattern for matching.
+        hit_dict = {
+            file: []
+        }
+        index = 0
+        for line in f:
             index += 1
-            hit = pattern.search(line)
-            if hit is not None:
-                logging.info(f"Line {index} in {file} contains pattern: {hit[0]}.")
-                hit_list.append({'Regex': regex, 'Match': hit[0], 'line_number': index, 'file_path': file})
-    return hit_list
+            for regex in regex_list:
+                pattern = re.compile(regex)
+                hit = pattern.search(line)
+                if hit is not None:
+                    logging.info(f"Line {index} in {file} contains pattern: {hit[0]}.")
+                    hit_dict[file].append({'regex': regex, 'match': hit[0], 'line_number': index})
+    print(hit_dict)
+    return hit_dict
 
 
 if __name__ == '__main__':
@@ -69,12 +75,15 @@ if __name__ == '__main__':
     # PART ONE: Get all IP Addresses from the log files.
     ip_list = []
     regex_list = []
+
+    regex_list = file_handler.read_file('ioc_regex.txt')
+
     for file in file_list:
         text = file_handler.read_file(file_path=file)
-        ip_list.append(get_ip(text, file))
-        regex_list.append(generic_regex(text, file))
+        ip_list.append(get_ip(file))
+        regex_list.append(generic_regex(regex_list, file))
 
-    outfile = 'output\\Identified_IPS.txt' # Setting Variable to write an outfile.
+    outfile = 'output\\' + str(case_number) + '_Identified_IPS.txt' # Setting Variable to write an outfile.
     file_handler.save_json(outfile, ip_list)
 
     # PART TWO: Compare IP Addresses found to Known BAD IP Addresses
