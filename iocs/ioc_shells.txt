@@ -1,0 +1,7 @@
+C:\\inetpub\\wwwroot\\aspnet_client\\OutlookEN\.aspx
+C:\\inetpub\\wwwroot\\aspnet_client\\system_web\\error\.aspx
+C:\\inetpub\\wwwroot\\aspnet_client\\discover\.aspx
+C:\\Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\OutlookEN\.aspx
+C:\\Program Files\\Microsoft\\Exchange Server\\V15\\FrontEnd\\HttpProxy\\owa\\auth\\RedirSuiteServerProxy\.aspx
+C:\\inetpub\\wwwroot\\aspnet_client\\shell\.aspx
+C:\\inetpub\\wwwroot\\aspnet_client\\supp0rt\.aspx
