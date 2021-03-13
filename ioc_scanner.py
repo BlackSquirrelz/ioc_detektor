@@ -1,19 +1,19 @@
-import sys
-import re
-import logging
-import file_handler
-
+#!/usr/bin/venv python3
+# -*- coding: utf-8 -*-
+# ioc_scanner.py
 
 # Author: BlackSquirrelz
 # Date: 2021-03-10
 # Description: Script to get IP Addresses from Files, and compares them to known IOCs.
 
+import re
+import logging
+import file_handler
+import argparse
+from datetime import date as dtd
 
-#TODO: Implement IOC handler for other than IP.
-#https://www.geeksforgeeks.org/python-how-to-search-for-a-string-in-text-files/
 
-
-def get_ip(file):
+def get_ip(file, outfile):
     """Read Text from file and regex search for IP Addreses."""
     print(f"Extracting IP Addresses from {file}")
     # Setting Regexd Pattern for IP Extraction.
@@ -36,7 +36,7 @@ def get_ip(file):
 
 def check_ip(suspect, confirmed):
     """Checking the found IP addresses against a list of IOC IP Addresses."""
-    file_handler.read_file('ioc_list.txt')
+    file_handler.read_file('iocs/ioc_ip.txt')
     if suspect in confirmed:
         logging.warning(f"Identified potential match {suspect}")
 
@@ -62,21 +62,73 @@ def generic_regex(regex_list, file):
     return hit_dict
 
 
-if __name__ == '__main__':
-    """Takes arguments, root path, and case number."""
-    print(25 * '-+-' + ' Start of Processing ' + 25 * '-+-')
-    root = sys.argv[1]
-    case_number = sys.argv[2]
-    #root = "test_directory"
-    print(root)
-    logging.info(f'Setting root to: {root}')
-    file_list = file_handler.get_file_paths(root_path=root)
+def process_file(args, file):
 
+    current_date = dtd.today()
+    print(current_date)
+
+    if args.output is not None:
+        outfile = args.output
+    else:
+        outfile = "output/" + str(current_date) + "_scan_results.txt"
+
+    if args.all is not None:
+        print(get_ip(file, outfile))
+    elif args.ipaddress is not None:
+        print("Getting IP")
+    elif args.regex is not None:
+        print("Getting Regex")
+    elif args.shells is not None:
+        print("Getting Regex")
+    elif args.hashes is not None:
+        print("Getting Regex")
+
+def write_results():
+    pass
+
+
+if __name__ == '__main__':
+    """Takes arguments, -a ALL -o OUTPUT -d ROOT_DIRECTORY -f FILE -ip IP -re REGEX -s SHELLS -h HASHES -? HELP."""
+
+    parser = argparse.ArgumentParser()
+
+    # -a ALL -o OUTPUT -d ROOT_DIRECTORY -f FILE -ip IP -re REGEX -s SHELLS -h HASHES -? HELP
+    parser.add_argument("-a", "--all", help="Run all tests, can take significant time.", action='store_true')
+    parser.add_argument("-c", "--case", help="Optional Case Name")
+    parser.add_argument("-o", "--output", help="Specify output file name")
+    parser.add_argument("-d", "--directory", help="Specify directory to start search")
+    parser.add_argument("-f", "--file", help="Specify single file for search")
+    parser.add_argument("-ip", "--ipaddress", help="Check for IP Addresses")
+    parser.add_argument("-re", "--regex", help="Check for Regex")
+    parser.add_argument("-s", "--shells", help="Check presence of Shells")
+    parser.add_argument("-ha", "--hashes", help="Check for presence of Hashes")
+
+    args = parser.parse_args()
+
+    print(25 * '-+-' + ' Start of Processing ' + 25 * '-+-')
+    case_number = args.case
+
+    if args.directory is not None:
+        dir_path = args.directory
+
+        for file in dir_path:
+            process_file(args, file)
+
+        logging.info(f'Setting root to: {args.directory}')
+    elif args.file is not None:
+        process_file(args, args.file)
+        logging.info(f'Starting single file scan on {args.file}')
+    else:
+        print(f"No vaild input was supplied, exiting program, use -h / -? for help.")
+        exit(1)
+
+
+    """
     # PART ONE: Get all IP Addresses from the log files.
     ip_list = []
     regex_list = []
 
-    regex_list = file_handler.read_file('ioc_regex.txt')
+    regex_list = file_handler.read_file('iocs/ioc_regex.txt')
 
     for file in file_list:
         text = file_handler.read_file(file_path=file)
@@ -87,7 +139,7 @@ if __name__ == '__main__':
     file_handler.save_json(outfile, ip_list)
 
     # PART TWO: Compare IP Addresses found to Known BAD IP Addresses
-    known_bads = file_handler.read_file('ioc_list.txt')
+    known_bads = file_handler.read_file('iocs/ioc_ip.txt')
     known_bads = [ip.strip() for ip in known_bads]
     identified_ips = file_handler.get_json('output\\Identified_IPS.txt')
     bad_ips = []
@@ -113,3 +165,4 @@ if __name__ == '__main__':
     file_handler.save_json(bad_regex_outfile, bad_regex)
 
     print(25 * '-*-' + ' End of Processing ' + 25 * '-*-')
+    """
