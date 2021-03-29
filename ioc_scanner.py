@@ -9,6 +9,8 @@
 import logging
 import argparse
 from datetime import date as dtd
+from datetime import datetime
+import time
 import scanner_logic as sl
 
 
@@ -22,7 +24,7 @@ def process_file(args, file):
     else:
         outfile = "output/" + str(current_date) + "_scan_results.txt"
 
-    # Setting Default file locations
+    # Setting Defaults file locations
     default_ip_file = "iocs/ioc_ip.txt"
     default_regex_file = "iocs/ioc_regex.txt"
     default_shells_file = "iocs/ioc_shells.txt"
@@ -33,7 +35,7 @@ def process_file(args, file):
         sl.generic_regex(default_regex_file, file)
 
     if args.ipaddress is True:
-        sl.get_ip(file)
+        sl.get_ip(file, default_ip_file)
 
     if args.regex is True:
         sl.generic_regex(default_regex_file, file)
@@ -43,6 +45,13 @@ def process_file(args, file):
 
     if args.hashes is True:
         print("Getting Regex")
+
+
+def timestats(start_time, end_time):
+    elapsed_time = end_time - start_time
+    print(f"\nStarted at: {start_time}")
+    print(f"Stopped at: {end_time}")
+    print(f"Elapsed Time {elapsed_time}")
 
 
 def write_results():
@@ -67,7 +76,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # Get Runtime stats
+    start_time = datetime.now()
+
     print(25 * '-+-' + ' Start of Processing ' + 25 * '-+-')
+    print(start_time)
     case_number = args.case
     print(args.ipaddress)
 
@@ -84,3 +97,8 @@ if __name__ == '__main__':
     else:
         print(f"No vaild input was supplied, exiting program, use -h / -? for help.")
         exit(1)
+
+    # End Time and elapsed time.
+    end_time = datetime.now()
+    print(25 * '-*-' + ' End of Processing ' + 25 * '-*-')
+    timestats(start_time, end_time)

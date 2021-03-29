@@ -10,34 +10,49 @@
 import re
 import file_handler
 import logging
+import requests
 
 
-def get_ip(file):
+# TODO: Optimization...
+def get_ip(file, ioc_file):
     """Read Text from file and regex search for IP Addreses."""
     print(f"Extracting IP Addresses from {file}")
     # Setting Regexd Pattern for IP Extraction.
-    pattern = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})')
-    index = 0
-    with open(file, 'r') as f:
-        ip_dict = {
-            file: []
-        }
-        for line in f:
-            line = line.strip()
-            index += 1
+    pattern = re.compile(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
 
-            hit = pattern.search(line)
-            if hit is not None:
-                logging.info(f"Line {index} in {file} contains IP: {hit[0]}.")
-                ip_dict[file].append(hit[0])
-    return ip_dict
+    exceptions = ['0.0.0.0', '127.0.0.1', None]
 
+    hits = []
+    all_ips = []
+    unique_ips = set()
 
-def check_ip(suspect, confirmed):
-    """Checking the found IP addresses against a list of IOC IP Addresses."""
-    file_handler.read_file('iocs/ioc_ip.txt')
-    if suspect in confirmed:
-        logging.warning(f"Identified potential match {suspect}")
+    # TODO: Change to CSV for added information on IOC origin, e.g. Emotet etc.
+    with open(ioc_file, 'r') as f:
+        ip_iocs = [ip.strip() for ip in f]
+
+    # Read information from Log file
+    with open(file, 'r') as scan_file:
+        text = [line.strip() for line in scan_file]
+        text = [t.split() for t in text]
+
+    # Search through tokenized log file
+    for line in text:
+        for token in line:
+            ip = pattern.search(token)
+            if ip is not None and ip[0] not in exceptions:
+                unique_ips.add(ip[0])
+
+    for ip in unique_ips:
+        if ip not in all_ips and ip in ip_iocs:
+            logging.warning(f"{file} contains IP: {ip}, this IP was found in {ioc_file}")
+            info = {ip: get_geoLocaton(ip)}
+            hits.append({file: info})
+            all_ips.append(ip)
+        elif ip not in all_ips:
+            logging.info(f"{file} contains IP: {ip}, this IP was not found in {ioc_file}")
+            all_ips.append(ip)
+
+    file_handler.save_json("output/suspicious_ips", hits)
 
 
 def generic_regex(regex_list, file):
@@ -68,47 +83,36 @@ def scan_shells(file):
 def scan_hashes(file):
     print("scanning for Hashes")
 
+def scan_regex():
+    print("Scanning Regex")
 
     """
-    # PART ONE: Get all IP Addresses from the log files.
-    ip_list = []
-    regex_list = []
+        # PART THREE: REGEX Matcher
+        bad_regex = []
+        for entry in regex_list:
+            for item in entry:
+                logging.warning(f'{item["Match"]} matches pattern {item["Regex"]} in file {item["file_path"]}, line #: {item["line_number"]}!')
+                bad_regex.append({'match': item["Match"], 'path': item["file_path"]})
 
-    regex_list = file_handler.read_file('iocs/ioc_regex.txt')
+        bad_regex_outfile = 'output\\' + str(case_number) + "_REGEX_Matches"
+        file_handler.save_json(bad_regex_outfile, bad_regex)
 
-    for file in file_list:
-        text = file_handler.read_file(file_path=file)
-        ip_list.append(get_ip(file))
-        regex_list.append(generic_regex(regex_list, file))
-
-    outfile = 'output\\' + str(case_number) + '_Identified_IPS.txt' # Setting Variable to write an outfile.
-    file_handler.save_json(outfile, ip_list)
-
-    # PART TWO: Compare IP Addresses found to Known BAD IP Addresses
-    known_bads = file_handler.read_file('iocs/ioc_ip.txt')
-    known_bads = [ip.strip() for ip in known_bads]
-    identified_ips = file_handler.get_json('output\\Identified_IPS.txt')
-    bad_ips = []
-    for entry in identified_ips:
-        for item in entry:
-            if item['IP'] in known_bads:
-                #print(f'\tWarning {item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
-                logging.warning(f'{item["IP"]} in {item["file_path"]}, line #: {item["line_number"]} matches known IOC IP!')
-                bad_ips.append({'ip': item["IP"], 'path': item["file_path"]})
-
-    # Writing Found BAD IP's
-    bad_ip_outfile = 'output\\' + str(case_number) + "_IP_Matches"
-    file_handler.save_json(bad_ip_outfile, bad_ips)
-
-    # PART THREE: REGEX Matcher
-    bad_regex = []
-    for entry in regex_list:
-        for item in entry:
-            logging.warning(f'{item["Match"]} matches pattern {item["Regex"]} in file {item["file_path"]}, line #: {item["line_number"]}!')
-            bad_regex.append({'match': item["Match"], 'path': item["file_path"]})
-
-    bad_regex_outfile = 'output\\' + str(case_number) + "_REGEX_Matches"
-    file_handler.save_json(bad_regex_outfile, bad_regex)
-
-    print(25 * '-*-' + ' End of Processing ' + 25 * '-*-')
     """
+
+
+def get_geoLocaton(ip):
+    """ Function to get the IP's GeoLocation"""
+    source = 'https://json.geoiplookup.io/' + str(ip)
+    print(source)
+    logging.info(f'Requesting {source}')
+    r = requests.get(source)
+    ip_info = r.json()
+    if r.status_code == 200:
+        try:
+            result = {'lat': ip_info['latitude'], 'long': ip_info['longitude'], 'country': ip_info['country_name'], 'source': source}
+            logging.info(f"{source} returned {r.status_code}")
+        except:
+            logging.error(f"Could not find information on {ip}, {ip_info['error']}")
+            result = {'lat': 0, 'long': 0, 'country': 'UNK', 'source': source}
+    return result
+
