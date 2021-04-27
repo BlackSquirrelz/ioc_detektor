@@ -4,7 +4,7 @@
 
 # Author: BlackSquirrelz
 # Date: 2021-03-10
-# Description: Script to get IP Addresses from Files, and compares them to known IOCs.
+# Description: Tool to scan log files for Known IOCs
 
 import logging
 import argparse
@@ -44,7 +44,7 @@ def process_file(args, file):
         print("Getting Regex")
 
     if args.hashes is True:
-        print("Getting Regex")
+        sl.scan_hashes(file, default_hashes_file)
 
 
 def timestats(start_time, end_time):
@@ -89,6 +89,7 @@ if __name__ == '__main__':
 
         for file in dir_path:
             process_file(args, file)
+            print(file)
 
         logging.info(f'Setting root to: {args.directory}')
     elif args.file is not None:

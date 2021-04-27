@@ -4,13 +4,14 @@
 
 # Author: BlackSquirrelz
 # Date: 2021-03-10
-# Description: Script to get IP Addresses from Files, and compares them to known IOCs.
+# Description: Tool to find IOC based on hash, ip, regular expressions and shells.
 
 # Imports
 import re
 import file_handler
 import logging
 import requests
+import hashlib
 
 
 # TODO: Optimization...
@@ -75,14 +76,29 @@ def generic_regex(regex_list, file):
     print(hit_dict)
     return hit_dict
 
+
+# Generating MD5 and SHA1 hash and comparing them to the list of known IOCs
+def scan_hashes(file, ioc_hashes):
+    print(f"Scanning {file}")
+
+    # Generating the SHA1 and MD5 hashes of the inspected file
+    md5hash = hashlib.md5(open(file, 'rb').read()).hexdigest()
+    sha1hash = hashlib.sha1(open(file, 'rb').read()).hexdigest()
+
+    # Comparison of MD5 and SHA1 against the Generated Hash of the file.
+    with open(ioc_hashes) as hash_file:
+        for line in hash_file:
+            line = line.strip().lower()
+            if line == md5hash or line == sha1hash:
+                logging.warning(f"{file} matches known IOC \nMD5: {md5hash}\nSHA1: {sha1hash}")
+
+
 # TODO: Implement shell scanner
 def scan_shells(file):
     print("Scanning for shells")
 
-# TODO: Implement hash scanner
-def scan_hashes(file):
-    print("scanning for Hashes")
 
+# TODO: Shell Scanner
 def scan_regex():
     print("Scanning Regex")
 
@@ -99,7 +115,7 @@ def scan_regex():
 
     """
 
-
+# Lookup geo location of IP
 def get_geoLocaton(ip):
     """ Function to get the IP's GeoLocation"""
     source = 'https://json.geoiplookup.io/' + str(ip)
@@ -109,7 +125,12 @@ def get_geoLocaton(ip):
     ip_info = r.json()
     if r.status_code == 200:
         try:
-            result = {'lat': ip_info['latitude'], 'long': ip_info['longitude'], 'country': ip_info['country_name'], 'source': source}
+            result = {'lat': ip_info['latitude'],
+                      'long': ip_info['longitude'],
+                      'country': ip_info['country_name'],
+                      'source': source
+                      }
+
             logging.info(f"{source} returned {r.status_code}")
         except:
             logging.error(f"Could not find information on {ip}, {ip_info['error']}")
