@@ -12,8 +12,10 @@ from datetime import date as dtd
 from datetime import datetime
 import time
 import scanner_logic as sl
+import testing.efficiency_test as profiler
 
 
+@profiler.profile
 def process_file(args, file):
 
     current_date = dtd.today()

@@ -12,9 +12,10 @@ import file_handler
 import logging
 import requests
 import hashlib
+import testing.efficiency_test as profiler
 
 
-# TODO: Optimization...
+@profiler.profile
 def get_ip(file, ioc_file):
     """Read Text from file and regex search for IP Addreses."""
     print(f"Extracting IP Addresses from {file}")
@@ -78,6 +79,7 @@ def generic_regex(regex_list, file):
 
 
 # Generating MD5 and SHA1 hash and comparing them to the list of known IOCs
+@profiler.profile
 def scan_hashes(file, ioc_hashes):
     print(f"Scanning {file}")
 
