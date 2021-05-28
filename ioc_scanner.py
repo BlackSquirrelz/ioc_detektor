@@ -11,8 +11,11 @@ import argparse
 from datetime import date as dtd
 from datetime import datetime
 import time
+
+import file_handler
 import scanner_logic as sl
 import testing.efficiency_test as profiler
+import os
 
 
 @profiler.profile
@@ -45,6 +48,9 @@ def process_file(args, file):
     if args.shells is True:
         print("Getting Regex")
 
+    if args.virustotal is True:
+        print("Getting Virus Total Information")
+
     if args.hashes is True:
         sl.scan_hashes(file, default_hashes_file)
 
@@ -63,6 +69,7 @@ def write_results():
 if __name__ == '__main__':
     """Takes arguments, -a ALL -o OUTPUT -d ROOT_DIRECTORY -f FILE -ip IP -re REGEX -s SHELLS -h HASHES -? HELP."""
 
+    # ----------------------------- Parsing Arguments --------------------------------------------------------------
     parser = argparse.ArgumentParser()
 
     # -a ALL -o OUTPUT -d ROOT_DIRECTORY -f FILE -ip IP -re REGEX -s SHELLS -h HASHES -? HELP
@@ -73,10 +80,13 @@ if __name__ == '__main__':
     parser.add_argument("-f", "--file", help="Specify single file for search")
     parser.add_argument("-ip", "--ipaddress", help="Check for IP Addresses", action='store_true')
     parser.add_argument("-re", "--regex", help="Check for Regex", action='store_true')
+    parser.add_argument("-vt", "--virustotal", help="Check hashes on Virus Total", action='store_true')
     parser.add_argument("-s", "--shells", help="Check presence of Shells", action='store_true')
     parser.add_argument("-ha", "--hashes", help="Check for presence of Hashes", action='store_true')
 
     args = parser.parse_args()
+
+    # ----------------------------- Processing  --------------------------------------------------------------
 
     # Get Runtime stats
     start_time = datetime.now()
@@ -86,19 +96,12 @@ if __name__ == '__main__':
     case_number = args.case
     print(args.ipaddress)
 
-    if args.directory is not None:
-        dir_path = args.directory
+    file_list = file_handler.get_process_files(args)
 
-        for file in dir_path:
-            process_file(args, file)
-            print(file)
-
-        logging.info(f'Setting root to: {args.directory}')
-    elif args.file is not None:
-        process_file(args, args.file)
-        logging.info(f'Starting single file scan on {args.file}')
+    if len(file_list) != 0:
+        process_file(args, file_list)
     else:
-        print(f"No vaild input was supplied, exiting program, use -h / -? for help.")
+        logging.warning("File List was empty!")
         exit(1)
 
     # End Time and elapsed time.

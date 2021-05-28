@@ -40,3 +40,26 @@ def get_file_paths(root_path):
             dirlist.extend(dirnames)
             files.extend(map(lambda n: os.path.join(*n), zip([dirpath] * len(filenames), filenames)))
     return files
+
+
+def get_process_files(args):
+    """ Getting the list of files from the command line argument"""
+    file_list = []
+
+    if args.directory is not None:
+        base_dir = args.directory
+        files = os.listdir(base_dir)
+        logging.info(f'Setting root to: {args.directory}')
+
+        for file in files:
+            full_path = base_dir + '\\' + file
+            file_list.append(full_path)
+
+    elif args.file is not None:
+        file_list.append(args.file)
+        logging.info(f'Starting single file scan on {args.file}')
+    else:
+        print(f"No vaild input was supplied, exiting program, use -h / -? for help.")
+        exit(1)
+
+    return file_list

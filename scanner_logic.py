@@ -139,3 +139,30 @@ def get_geoLocaton(ip):
             result = {'lat': 0, 'long': 0, 'country': 'UNK', 'source': source}
     return result
 
+
+# Lookup data on virus total
+def lookup_vt(file_hash):
+    """Retrieve information about an analysis
+       Parameters:
+           api_key (str): VirusTotal API key
+           proxies (dict, optional): Dictionary containing proxies
+           timeout (float, optional): The amount of time in seconds the request should wait before timing out.
+       """
+    file_hash ='f7e218b0195b81764b0a9e233c60b821078250339b039ba92a3722c5dd07613f'
+
+    # Setting Parameters
+    with open('creds') as c:
+        api_key = c.readline()
+
+    proxies = None
+    timeout = None
+
+    response = requests.get(f'https://www.virustotal.com/api/v3/search?query={file_hash}',
+                            headers={'x-apikey': api_key,
+                                     'Accept': 'application/json'},
+                            proxies=proxies,
+                            timeout=timeout)
+    print(type(response.text))
+    #save_json(, f'results/{file_hash}.json')
+
+

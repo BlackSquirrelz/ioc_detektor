@@ -14,6 +14,7 @@ Flags:
 - -re REGEX
 - -s SHELLS
 - -ha HASHES
+- -vt VirusTotal
 - -? HELP
 
 ---
